@@ -50,17 +50,41 @@ students = [
 print("\nAdding fake data...")
 
 # ================= ADD DATA =================
+
+
 for student, name, grade in students:
     try:
-        tx = contract.functions.setGrade(
-            student, name, grade
-        ).transact({'from': admin})
+# register user first
+        tx1 = contract.functions.registerUser(
+            name
+        ).transact({
+            'from': student,
+            'gas': 3000000
+        })
 
-        web3.eth.wait_for_transaction_receipt(tx)
+        web3.eth.wait_for_transaction_receipt(tx1)
 
-        print(f" {name} added!")
+        # set grade
+        tx2 = contract.functions.setGrade(
+            student,
+            grade
+        ).transact({
+            'from': admin,
+            'gas': 3000000
+
+        })
+
+        web3.eth.wait_for_transaction_receipt(tx2)
+
+        print(f"{name} added!")
 
     except Exception as e:
-        print("Error:", e)
+        print("\nFAILED STUDENT:")
+        print("Name:", name)
+        print("Address:", student)
+        print("Grade:", grade)
+
+        print("\nREAL ERROR:")
+        print(str(e))
 
 print("\nProject is READY TO USE!")

@@ -22,7 +22,7 @@ contract = web3.eth.contract(address=contract_address, abi=abi)
 
 # test getGrade
 # address = "0x486416D9A11A47Ab1C745586bB0623259c905c5a"
-address = "0x07Bc69209e84dc554E51991060e53a6DFD64dF70"
+address = "0x52743200c7b9977C5dE89f6A4f4fb7F8323B7C4C"
 name, grade = contract.functions.getGrade(address).call()
 
 print("Name:", name)

@@ -18,8 +18,7 @@ contract = web3.eth.contract(
 user = web3.eth.accounts[1]
 
 try:
-    tx = contract.functions.setGrade(
-        user, "Hacker", 100
+    tx = contract.functions.setGrade(user, 100
     ).transact({'from': user})
 
     web3.eth.wait_for_transaction_receipt(tx)

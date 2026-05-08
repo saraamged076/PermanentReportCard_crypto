@@ -21,22 +21,22 @@ with open("abi.json") as f:
 contract = web3.eth.contract(address=contract_address, abi=abi)
 
 # start listening
-last_block = web3.eth.block_number
+# listen only for GradeSet event
+event_filter = contract.events.GradeSet.create_filter(
+    from_block='latest'
+)
 
-print("Listening for grade changes...")
+print("Listening for REAL grade changes...")
 
 while True:
-    current_block = web3.eth.block_number
 
-    if current_block > last_block:
-        for i in range(last_block + 1, current_block + 1):
-            block = web3.eth.get_block(i, full_transactions=True)
+    for event in event_filter.get_new_entries():
 
-            for tx in block.transactions:
-                # check if transaction is to our contract
-                if tx['to'] == contract.address:
-                    print("🚨 ALERT: A grade change just happened!")
+        student = event['args']['student']
+        grade = event['args']['grade']
 
-        last_block = current_block
+        print("\n🚨 ALERT: A grade change just happened!")
+        print("Student:", student)
+        print("New Grade:", grade)
 
     time.sleep(2)

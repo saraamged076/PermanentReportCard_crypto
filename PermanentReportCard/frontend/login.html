@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="box">
+    <h2>Login</h2>
+
+    <input id="address" placeholder="Wallet Address">
+
+    <button onclick="login()">Login</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+<script src="app.js"></script>
+
+<script>
+function login() {
+    let address = document.getElementById("address").value;
+    localStorage.setItem("user", address);
+    window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>

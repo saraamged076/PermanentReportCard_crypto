@@ -19,18 +19,23 @@ contract = web3.eth.contract(address=contract_address, abi=abi)
 
 
 # ================== 1. TOTAL STUDENTS ==================
+grade_events = contract.events.GradeSet().get_logs()
 
-students_count = 0
+students = set()
 
-for acc in web3.eth.accounts:
-    name, grade = contract.functions.getGrade(acc).call()
-    if name != "" or grade != 0:
-        students_count += 1
+for event in grade_events:
+    students.add(event['args']['student'])
 
+students_count = len(students)
 
 # ================== 2. TOTAL COINS ==================
 
-total_coins = contract.functions.totalSupply().call()
+mint_events = contract.events.CoinsMinted().get_logs()
+
+total_coins = 0
+
+for event in mint_events:
+    total_coins += event['args']['amount']
 
 
 # ================== 3. TOTAL CONTRACT TRANSACTIONS ==================

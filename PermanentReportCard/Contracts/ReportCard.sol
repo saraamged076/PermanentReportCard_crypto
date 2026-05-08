@@ -40,6 +40,7 @@ contract ReportCard {
     }
 
     mapping(address => Student) public students;
+ 
 
     // ================== USERS ==================
     mapping(address => string) public userNames;
@@ -66,6 +67,7 @@ contract ReportCard {
         require(isRegistered[student], "User not registered");
         require(grade <= 100, "Grade must be <= 100");
 
+
         // لو أول مرة يتسجل
         if (students[student].grade == 0) {
             totalStudents++;
@@ -74,6 +76,7 @@ contract ReportCard {
         string memory name = userNames[student];
 
         students[student] = Student(name, grade);
+
 
         emit GradeSet(student, name, grade);
     }
@@ -141,6 +144,7 @@ contract ReportCard {
         public whenNotPaused
     {
         require(balances[msg.sender] >= amount, "Not enough balance");
+        require(isRegistered[to], "Receiver not registered");
         require(to != address(0), "Invalid address");
         require(amount > 0, "Invalid amount");
 

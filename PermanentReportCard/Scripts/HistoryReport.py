@@ -17,18 +17,23 @@ contract = web3.eth.contract(
 total = 0
 count = 0
 
-for acc in web3.eth.accounts:
-    name, grade = contract.functions.getGrade(acc).call()
+# ===== READ BLOCKCHAIN HISTORY =====
+events = contract.events.GradeSet().get_logs(
+    from_block=0,
+    to_block='latest'
+)
 
-    if name != "" or grade != 0:
-        total += grade
-        count += 1
+latest_grades = {}
 
-if count > 0:
-    avg = total / count
-else:
-    avg = 0
+for event in events:
 
-print("\n=== CLASS REPORT ===")
-print(f"Students: {count}")
-print(f"Average Grade: {avg:.2f}")
+    student = event['args']['student']
+    grade = event['args']['grade']
+
+    latest_grades[student] = grade
+
+# ===== CALCULATE AVERAGE =====
+for student, grade in latest_grades.items():
+
+    total += grade
+    count += 1

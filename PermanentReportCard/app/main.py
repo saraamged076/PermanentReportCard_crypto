@@ -1,5 +1,6 @@
 import code
 
+from torch import addr
 from web3 import Web3
 import json
 
@@ -66,24 +67,68 @@ def user_menu(user_name, user_address):
                         latest_block = web3.eth.block_number
                         print("\n=== Activity History ===")
                         print("Block | Action | Value")
+
                         found = False
-                        for i in range(latest_block + 1):
-                            block = web3.eth.get_block(i, full_transactions=True)
-                            for tx in block.transactions:
-                                if tx['from'] == addr or tx['to'] == addr:
-                                    value = web3.from_wei(tx['value'], 'ether')
-                                    if tx['to'] == contract.address:
-                                        action = "Interacted with Contract"
-                                    elif tx['to'] is None:
-                                        action = "Contract Deployment"
-                                    elif value > 0:
-                                        action = "ETH Transfer"
-                                    else:
-                                        action = "Transaction"
-                                    print(f"{i} | {action} | {value}")
-                                    found = True
+
+                        # ===== Grade Events =====
+                        grade_events = contract.events.GradeSet().get_logs(
+                            from_block=0,
+                            to_block='latest'
+                        )
+                        for event in grade_events:
+
+                            if event['args']['student'].lower() == addr.lower():
+
+                                print(
+                                    f"{event['blockNumber']} | "
+                                    f"Grade Updated | "
+                                    f"{event['args']['grade']}"
+                                )
+
+                                found = True
+                                # ===== Mint Events =====
+                        mint_events = contract.events.CoinsMinted().get_logs(
+                            from_block=0,
+                            to_block='latest'
+                        )
+
+                        for event in mint_events:
+
+                            if event['args']['to'].lower() == addr.lower():
+
+                                print(
+                                    f"{event['blockNumber']} | "
+                                    f"Coins Minted | "
+                                    f"{event['args']['amount']}"
+                                )
+
+                                found = True
+                                # ===== Transfer Events =====
+                        transfer_events = contract.events.Transfer().get_logs(
+                            from_block=0,
+                            to_block='latest'
+                        )
+
+                        for event in transfer_events:
+
+                            sender = event['args']['from'].lower()
+                            receiver = event['args']['to'].lower()
+
+                            if sender == addr.lower() or receiver == addr.lower():
+
+                                print(
+                                    f"{event['blockNumber']} | "
+                                    f"Coin Transfer | "
+                                    f"{event['args']['amount']}"
+                                )
+
+                                found = True
+
                         if not found:
                             print("No activity found.")
+
+
+
             except Exception as e:
                  print("Error:", e)
                                      
@@ -120,7 +165,7 @@ def admin_menu(password, admin_address):
                 # List available accounts
             for i, acc in enumerate(accounts):
                  print(f"{i+1}. {acc}")
-            idx = int(input("Choose student index: "))
+            idx = int(input("Choose student index: ")) - 1
             student = Web3.to_checksum_address(accounts[idx])
             try:
                 # check if registered
@@ -153,7 +198,10 @@ def admin_menu(password, admin_address):
                 print("Grade added successfully!")
 
             except Exception as e:
-                print("Error:", e)
+                if "paused" in str(e).lower():
+                    print("Contract is paused! Resume it first.")
+                else:
+                    print("Error:", e)
     # ================= UPDATE ================= 
         elif admin_choice == "2":
             
@@ -177,7 +225,10 @@ def admin_menu(password, admin_address):
                             web3.eth.wait_for_transaction_receipt(tx)
                             print(" Grade updated successfully!")
             except Exception as e:
-                print("Error:", e)
+                if "paused" in str(e).lower():
+                    print("Contract is paused! Resume it first.")
+                else:
+                    print("Error:", e)
                     # ================= MINT =================
         elif admin_choice == "3":
              to = Web3.to_checksum_address(input("Enter address: ").strip())
@@ -201,7 +252,10 @@ def admin_menu(password, admin_address):
                             print("Coins minted successfully!")
                             print(f"New balance of {name}: {contract.functions.getBalance(to).call()}")
              except Exception as e:
-                    print("Error:", e)        
+                    if "paused" in str(e).lower():
+                        print("Contract is paused! Resume it first.")
+                    else:
+                        print("Error:", e)       
                     # ================= BATCH ADD =================
         elif admin_choice == "4":
             try:
@@ -251,23 +305,51 @@ def admin_menu(password, admin_address):
                     print("Batch added successfully!")
 
             except Exception as e:
-                print("Error:", e)
+                if "paused" in str(e).lower():
+                    print("Contract is paused! Resume it first.")
+                else:
+                    print("Error:", e)
             # ================= PAUSE/RESUME =================
         elif admin_choice == "5":
-                tx = contract.functions.pause().transact({'from': admin_address})
+
+            try:
+
+                tx = contract.functions.pause().transact({
+                    'from': admin_address
+                })
+
                 web3.eth.wait_for_transaction_receipt(tx)
-                print("Contract Paused!")   
+
+                print("Contract Paused!")
+
+            except Exception as e:
+
+                print("Contract is already paused!")
              #===================================================     
         elif admin_choice == "6":
-            tx = contract.functions.resume().transact({'from': admin_address})
-            web3.eth.wait_for_transaction_receipt(tx)
-            print("Contract Resumed!")            
+
+            try:
+
+                tx = contract.functions.resume().transact({
+                    'from': admin_address
+                })
+
+                web3.eth.wait_for_transaction_receipt(tx)
+
+                print("Contract Resumed!")
+
+            except Exception as e:
+
+                print("Contract is already running!")        
             # ================= TRANSFER OWNERSHIP =================
         elif admin_choice == "7":
-            new_admin = Web3.to_checksum_address(input("Enter new admin: "))
-            tx = contract.functions.transferOwnership(new_admin).transact({'from': admin_address})
-            web3.eth.wait_for_transaction_receipt(tx)
-            print("Ownership transferred!")
+            try:    
+                new_admin = Web3.to_checksum_address(input("Enter new admin: "))
+                tx = contract.functions.transferOwnership(new_admin).transact({'from': admin_address})
+                web3.eth.wait_for_transaction_receipt(tx)
+                print("Ownership transferred!")
+            except Exception as e:
+                print("Error:", e)
             # ================= BACK =================
         elif admin_choice == "8":
             break
